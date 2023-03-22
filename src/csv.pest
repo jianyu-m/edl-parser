@@ -1,0 +1,67 @@
+identifier = { ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)* }
+number = { ASCII_DIGIT+ }
+
+WHITESPACE = _ { " " | "\t" }
+// COMMENT = {}
+
+// data types
+Tchar     = { "char" }
+Tshort    = { "short" }
+Tunsigned = { "unsigned" }
+Tint      = { "int" }
+Tfloat    = { "float" }
+Tdouble   = { "double" }
+
+Tint8     = { "int8_t" }
+Tint16    = { "int16_t" }
+Tint32    = { "int32_t" }
+Tint64    = { "int64_t" }
+
+Tuint8    = { "uint8_t" }
+Tuint16   = { "uint16_t" }
+Tuint32   = { "uint32_t" }
+Tuint64   = { "uint64_t" }
+
+Tsizet    = { "size_t" }
+Twchar    = { "wchar_t" }
+Tlong     = { "long" }
+Tvoid     = { "void" }
+
+Tstruct   = { "struct" }
+Tunion    = { "union" }
+Tenum     = { "enum" }
+
+//   (* specifier *)
+Tenclave   = _ { "enclave" }
+Ttrusted   = _ { "trusted" }
+Tuntrusted = _ { "untrusted" }
+Tfrom      = _ { "from" }
+Timport    = _ { "import" }
+Tallow     = _ { "allow" }
+Tpublic    = _ { "public" }
+Tinclude   = _ { "include" }
+
+//   (* Type qualifier *)
+Tconst = { "const" }
+
+//   (* symbols *)
+TLBrace    = _ { "{" }
+TRBrace    = _ { "}" }
+TLParen    = _ { "(" }
+TRParen    = _ { ")" }
+TLBrack    = _ { "[" }
+TRBrack    = _ { "]" }
+TPtr       = { "*" }
+TDot       = { "." }
+TComma     = _ { "," }
+TSemicolon = _ { ";" }
+TEqual     = { " = " }
+
+edl       = { TLBrace ~ trusted* ~ untrusted* ~ TRBrace }
+trusted   = { Ttrusted ~ TLBrace ~ trusted_function* ~ TRBrace }
+untrusted = { Tuntrusted ~ TLBrace ~ untrusted_function* ~ TRBrace }
+
+basic_type = { Tchar | Tshort | Tunsigned | Tint | Tfloat | Tdouble | Tvoid }
+
+trusted_function = { Tpublic ~ basic_type ~ identifier ~ TLParen ~ TRParen ~ TSemicolon }
+untrusted_function = { Tpublic ~ basic_type ~ identifier ~ TLParen ~ TRParen ~ TSemicolon }
