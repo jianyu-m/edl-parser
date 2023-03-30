@@ -1,8 +1,12 @@
-identifier = { ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)* }
+sym = @ { ASCII_ALPHA | "_" }
+identifier = @ { sym ~ (sym | ASCII_DIGIT)* }
 number = { ASCII_DIGIT+ }
 
-WHITESPACE = _ { " " | "\t" }
-// COMMENT = {}
+WHITESPACE        = _ { " " | "\t" | "\r" | "\n" }
+NEWLINE           = _ { "\n" | "\r\n" | "\r" }
+MULTILINE_COMMENT = @ { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+ONELINE_COMMENT   = @ { "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+COMMENT           = _ { ONELINE_COMMENT |  MULTILINE_COMMENT}
 
 // data types
 Tchar     = { "char" }
@@ -27,9 +31,10 @@ Twchar    = { "wchar_t" }
 Tlong     = { "long" }
 Tvoid     = { "void" }
 
-Tstruct   = { "struct" }
-Tunion    = { "union" }
-Tenum     = { "enum" }
+Tstruct   = { "struct" ~ identifier }
+Tunion    = { "union" ~ identifier }
+Tenum     = { "enum" ~ identifier }
+Tclass     = { identifier }
 
 //   (* specifier *)
 Tenclave   = _ { "enclave" }
@@ -57,11 +62,23 @@ TComma     = _ { "," }
 TSemicolon = _ { ";" }
 TEqual     = { " = " }
 
-edl       = { TLBrace ~ trusted* ~ untrusted* ~ TRBrace }
-trusted   = { Ttrusted ~ TLBrace ~ trusted_function* ~ TRBrace }
-untrusted = { Tuntrusted ~ TLBrace ~ untrusted_function* ~ TRBrace }
+edl       = { COMMENT* ~ Tenclave ~ TLBrace ~ trusted* ~ untrusted* ~ TRBrace }
+trusted   = { Ttrusted ~ TLBrace ~ trusted_function* ~ TRBrace ~ TSemicolon }
+untrusted = { Tuntrusted ~ TLBrace ~ untrusted_function* ~ TRBrace ~ TSemicolon }
 
-basic_type = { Tchar | Tshort | Tunsigned | Tint | Tfloat | Tdouble | Tvoid }
+basic_type = @ { Tchar | Tshort | Tunsigned | Tint | Tfloat | Tdouble | Tvoid | Tstruct | Tunion | Tenum | Tclass }
+ptr_prefix = @ { "*" }
 
-trusted_function = { Tpublic ~ basic_type ~ identifier ~ TLParen ~ TRParen ~ TSemicolon }
-untrusted_function = { Tpublic ~ basic_type ~ identifier ~ TLParen ~ TRParen ~ TSemicolon }
+parameterOptEntryValue = @ { "=" ~ identifier}
+parameterOptEntryKey = @ { identifier }
+parameterOptEntry = @ { parameterOptEntryKey ~ parameterOptEntryValue? }
+parameterOptEntryEnd = @ { "," ~ parameterOptEntry }
+parameterOptEntries = { parameterOptEntry ~ parameterOptEntryEnd* }
+parameterOpt = { TLBrack ~ parameterOptEntries ~ TRBrack }
+parameter = { parameterOpt? ~ basic_type ~ ptr_prefix? ~ identifier }
+parametersEnd = { "," ~ parameter }
+parameters = { parameter ~ parametersEnd* }
+funcName = { identifier }
+
+trusted_function = { Tpublic ~ basic_type ~ funcName ~ TLParen ~ parameters ~ TRParen ~ TSemicolon }
+untrusted_function = { Tpublic ~ basic_type ~ funcName ~ TLParen ~ parameters ~ TRParen ~ TSemicolon }
